@@ -9,3 +9,6 @@ node_modules/
 
 # Ignore Google Cloud Storage key file
 teststoragetm-b6cc57532570.json
+
+# Ignore package-lock.json file
+package-lock.json
