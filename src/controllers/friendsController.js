@@ -2,25 +2,36 @@
 const { Op } = require('sequelize')
 const Friend = require('../models/friend')
 const User = require('../models/user')
+const jwt = require('jsonwebtoken')
 
-// Function to search for users based on name or email
+/// Function to search for users based on name or email
 const searchUsers = async (req, res) => {
   const { searchQuery } = req.query
-  const { email } = req.body
+  const { token } = req.body
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' })
+  }
+
+  if (!searchQuery) {
+    return res.status(400).json({ message: 'Search query not provided' })
+  }
 
   try {
-    // Find the current user
-    const currentUser = await User.findOne({ where: { email } })
-    if (!currentUser) {
-      return res.status(404).json({ message: 'User not found' })
-    }
+    // Verify and decode the token
+    const currentUser = jwt.verify(token, process.env.JWT_SECRET)
 
-    // Search for users matching the search query
+    // Search for users matching the search query, excluding the current user
     const users = await User.findAll({
       where: {
-        [Op.or]: [
-          { name: { [Op.iLike]: `%${searchQuery}%` } }, // Case-insensitive name search
-          { email: { [Op.iLike]: `%${searchQuery}%` } }, // Case-insensitive email search
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { name: { [Op.iLike]: `%${searchQuery}%` } }, // Case-insensitive name search
+              { email: { [Op.iLike]: `%${searchQuery}%` } }, // Case-insensitive email search
+            ],
+          },
+          { id: { [Op.ne]: currentUser.id } }, // Exclude current user
         ],
       },
     })
@@ -28,12 +39,8 @@ const searchUsers = async (req, res) => {
     // Calculate mutual friends count for each user
     const usersWithMutualFriendsCount = await Promise.all(
       users.map(async (user) => {
-        if (!user) {
-          return null // or some default value
-        }
-
         const mutualFriendsCount = await calculateMutualFriendsCount(
-          user.email,
+          user.id,
           currentUser.id
         )
         return { ...user.toJSON(), mutualFriendsCount }
@@ -50,15 +57,8 @@ const searchUsers = async (req, res) => {
 }
 
 // Function to calculate the count of mutual friends between two users
-const calculateMutualFriendsCount = async (userEmail, currentUserId) => {
+const calculateMutualFriendsCount = async (userId, currentUserId) => {
   try {
-    // Retrieve user ID from email
-    const user = await User.findOne({ where: { email: userEmail } })
-    if (!user) {
-      return 0 // If the user is not found, return 0 mutual friends
-    }
-    const userId = user.id
-
     // Retrieve friend lists for both users
     const friendsOfUser = await Friend.findAll({ where: { userId } })
     const friendsOfCurrentUser = await Friend.findAll({
@@ -67,7 +67,7 @@ const calculateMutualFriendsCount = async (userEmail, currentUserId) => {
 
     // Filter mutual friends
     const mutualFriends = friendsOfUser.filter((friend) =>
-      friendsOfCurrentUser.find(
+      friendsOfCurrentUser.some(
         (currentFriend) => currentFriend.friendId === friend.friendId
       )
     )
@@ -81,14 +81,15 @@ const calculateMutualFriendsCount = async (userEmail, currentUserId) => {
 
 // Function to add a friend for the current user
 const addFriend = async (req, res) => {
-  const { email, friendId } = req.body
+  const { token, friendId } = req.body
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' })
+  }
 
   try {
-    // Find the current user
-    const currentUser = await User.findOne({ where: { email } })
-    if (!currentUser) {
-      return res.status(404).json({ message: 'User not found' })
-    }
+    // Verify and decode the token
+    const { id: currentUserId } = jwt.verify(token, process.env.JWT_SECRET)
 
     // Find the friend user
     const friendUser = await User.findOne({ where: { id: friendId } })
@@ -98,7 +99,7 @@ const addFriend = async (req, res) => {
 
     // Check if the friend is already added
     const existingFriend = await Friend.findOne({
-      where: { userId: currentUser.id, friendId: friendId },
+      where: { userId: currentUserId, friendId: friendId },
     })
 
     if (existingFriend) {
@@ -107,7 +108,7 @@ const addFriend = async (req, res) => {
 
     // Add the friend
     await Friend.create({
-      userId: currentUser.id,
+      userId: currentUserId,
       friendId: friendId,
     })
 

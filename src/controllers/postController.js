@@ -3,6 +3,7 @@ const fs = require('fs')
 const multer = require('multer')
 const Post = require('../models/post')
 const storage = require('../utils/storageUtil')
+const jwt = require('jsonwebtoken')
 
 // Multer configuration for file upload
 const upload = multer({ dest: './src/uploads' }).array('photos', 5)
@@ -77,7 +78,9 @@ const getPostById = async (req, res) => {
   } catch (error) {
     // Handle errors
     console.error('Error fetching post by ID:', error)
-    res.status(500).json({ message: 'Internal server error' })
+    res
+      .status(500)
+      .json({ message: 'Something went wrong. Please try again later.' })
   }
 }
 
@@ -85,6 +88,14 @@ const getPostById = async (req, res) => {
 const editPost = async (req, res) => {
   try {
     const postId = req.params.id
+    const { token, description } = req.body
+
+    // Verify the token and extract user information
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' })
+    }
+
+    const { id: userId } = jwt.verify(token, process.env.JWT_SECRET)
 
     // Find the post by ID
     const post = await Post.findByPk(postId)
@@ -92,10 +103,17 @@ const editPost = async (req, res) => {
       return res.status(404).json({ message: 'Post not found' })
     }
 
+    // Check if the user is the creator of the post
+    if (post.userId !== userId) {
+      return res
+        .status(403)
+        .json({ message: 'You are not authorized to edit this post' })
+    }
+
     // Update the post data
     const updatedData = {}
-    if (req.body.description) {
-      updatedData.description = req.body.description
+    if (description) {
+      updatedData.description = description
     }
 
     // Apply the updates
@@ -112,37 +130,47 @@ const editPost = async (req, res) => {
   }
 }
 
+module.exports = editPost
+
 // Controller function to create a new post
 const createPost = async (req, res) => {
   try {
     // Handle file upload
     upload(req, res, async function (err) {
       if (err) {
-        if (err instanceof multer.MulterError) {
-          console.error('Multer error:', err)
-        } else {
-          console.error('Unknown error:', err)
-        }
+        // Log multer errors or unknown errors
+        console.error(
+          err instanceof multer.MulterError
+            ? 'Multer error:'
+            : 'Unknown error:',
+          err
+        )
         return res
           .status(500)
           .json({ message: 'Something went wrong. Please try again later.' })
       }
 
-      // No files uploaded
+      // Check if files are uploaded
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({
           message: 'No files were uploaded. Please select at least one file.',
         })
       }
 
-      // Get user's email if available
-      const userEmail = req.body?.email
-      if (!userEmail) {
-        return res.status(400).json({ message: 'User email is required' })
+      // Extract token from request body
+      const { token } = req.body
+      if (!token) {
+        return res.status(401).json({ message: 'No token provided' })
       }
 
-      // Get post description if available
-      const description = req.body?.description
+      // Verify token and extract user information
+      const { id: userId, email: userEmail } = jwt.verify(
+        token,
+        process.env.JWT_SECRET
+      )
+
+      // Extract post description from request body
+      const description = req.body.description
       if (!description) {
         return res.status(400).json({ message: 'Post description is required' })
       }
@@ -163,21 +191,19 @@ const createPost = async (req, res) => {
           i + 1
         }.${file.originalname.split('.').pop()}`
         try {
+          // Upload file to Google Cloud Storage
           await bucket.upload(file.path, { destination })
           const imageUrl = `https://storage.googleapis.com/${bucketName}/${encodeURIComponent(
             destination
           )}`
 
-          // Delete the uploaded image file
+          // Delete the uploaded image file from local storage
           fs.unlinkSync(file.path)
-
           return imageUrl
         } catch (error) {
+          // Log error and delete the uploaded image file from local storage
           console.error('Error uploading file:', error)
-
-          // Delete the uploaded image file even if an error occurs
           fs.unlinkSync(file.path)
-
           throw error
         }
       })
@@ -185,13 +211,14 @@ const createPost = async (req, res) => {
       // Wait for all uploads to complete
       const imageUrls = await Promise.all(uploadPromises)
 
-      // Delete the user's uploads folder
+      // Delete the user's uploads folder after successful uploads
       fs.rmdirSync(userUploadsDir, { recursive: true })
 
       // Create new post with uploaded image URLs
       const newPost = await Post.create({
         description,
         photo: imageUrls,
+        userId,
         userEmail,
       })
 
@@ -201,11 +228,14 @@ const createPost = async (req, res) => {
         .json({ message: 'Post created successfully', post: newPost })
     })
   } catch (error) {
+    // Log error and send error response
     console.error('Error creating post:', error)
     res
       .status(500)
       .json({ message: 'Something went wrong. Please try again later.' })
   }
 }
+
+module.exports = createPost
 
 module.exports = { createPost, editPost, getAllPosts, getPostById }

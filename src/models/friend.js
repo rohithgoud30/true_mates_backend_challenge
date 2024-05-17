@@ -8,7 +8,7 @@ const Friend = sequelize.define('Friend', {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
-    comment: 'Unique identifier for each friend relationship', // Add comment for clarity
+    comment: 'Unique identifier for each friend relationship',
   },
   userId: {
     type: DataTypes.UUID,

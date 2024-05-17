@@ -21,6 +21,12 @@ const Post = sequelize.define('Post', {
     allowNull: false,
     comment: 'Array of photo URLs associated with the post', // Add comment for clarity
   },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: User.id,
+    comment: 'Id of the user who created the post', // Add comment for clarity
+  },
   userEmail: {
     type: DataTypes.STRING,
     allowNull: false,

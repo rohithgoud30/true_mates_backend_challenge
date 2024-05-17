@@ -17,17 +17,10 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Create the user
-    const newUser = await User.create({ name, email, password: hashedPassword })
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' } // Set token expiration time as needed
-    )
+    await User.create({ name, email, password: hashedPassword })
 
     // Return success response with JWT token
-    res.status(201).json({ message: 'User created successfully', token })
+    res.status(201).json({ message: 'User registered successfully' })
   } catch (error) {
     console.error('Error registering user:', error)
     res
@@ -72,11 +65,24 @@ const loginUser = async (req, res) => {
 
 // Function to verify if a user exists based on email
 const verifyUser = async (req, res) => {
-  const { email } = req.body
+  const { email, token } = req.body
+
   try {
+    // Decode JWT token to extract user ID
+    const { id } = jwt.verify(token, process.env.JWT_SECRET)
+
+    // Find user in the database based on email
     const user = await User.findOne({ where: { email } })
+
     if (user) {
-      res.status(200).json({ message: 'User exists' })
+      // Check if the user ID from JWT matches the user found in the database
+      if (user.id === id) {
+        res.status(200).json({ message: 'User exists' })
+      } else {
+        res
+          .status(403)
+          .json({ message: 'User ID in token does not match the user' })
+      }
     } else {
       res.status(404).json({ message: 'User not found' })
     }
