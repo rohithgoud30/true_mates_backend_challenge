@@ -63,34 +63,35 @@ const loginUser = async (req, res) => {
   }
 }
 
-// Function to verify if a user exists based on email
 const verifyUser = async (req, res) => {
-  const { email, token } = req.body
+  const { token } = req.body
 
   try {
     // Decode JWT token to extract user ID
-    const { id } = jwt.verify(token, process.env.JWT_SECRET)
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const { id } = decoded
 
-    // Find user in the database based on email
-    const user = await User.findOne({ where: { email } })
+    // Find user in the database based on ID
+    const user = await User.findOne({ where: { id } })
 
     if (user) {
-      // Check if the user ID from JWT matches the user found in the database
-      if (user.id === id) {
-        res.status(200).json({ message: 'User exists' })
-      } else {
-        res
-          .status(403)
-          .json({ message: 'User ID in token does not match the user' })
-      }
+      res.status(200).json({ message: 'User exists' })
     } else {
       res.status(404).json({ message: 'User not found' })
     }
   } catch (error) {
     console.error('Error verifying user:', error)
-    res
-      .status(500)
-      .json({ message: 'Unable to verify user. Please try again later.' })
+
+    // Provide more specific error messages based on the JWT error type
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({ message: 'Token has expired' })
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      res.status(400).json({ message: 'Invalid token' })
+    } else {
+      res
+        .status(500)
+        .json({ message: 'Unable to verify user. Please try again later.' })
+    }
   }
 }
 
