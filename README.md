@@ -87,9 +87,21 @@ npm run server
 ## API Endpoints
 
 - `/auth/register`: POST - Route for user registration
+
+![Register](screenshots/register.png)
+  
 - `/auth/login`: POST - Route for user login
+
+![Login](screenshots/login.png)
+  
 - `/auth/verify`: POST - Route to verify user existence
+
+![Verify](screenshots/verrify.png)
+  
 - `/posts`: POST - Route to create a new post
+
+![Create Post](screenshots/createPost.png)
+
 - `/posts/:id`: PUT - Route to edit an existing post
 - `/posts/:id`: GET - Route to retrieve a post by its ID
 - `/posts`: GET - Route to retrieve all posts
