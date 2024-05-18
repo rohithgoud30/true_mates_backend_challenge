@@ -46,7 +46,7 @@ true_mates_backend_challenge/
 
 #### Notes:
 
-- I understand how to add middleware for each route and pass authorization tokens through headers. However, the specific implementation depends on the data sent from the frontend and the business logic requirements. I am familiar with industry standards and can apply them accordingly.
+- I understand how to add middleware for each route and pass authorization tokens through headers. However, the specific implementation depends on the data sent from the frontend and the business logic requirements. I am familiar with good practices and industry standards and can apply them accordingly.
 
 ## Installation
 
@@ -107,8 +107,14 @@ npm run server
 ![Create Post](screenshots/createPost.png)
 
 - `/posts/:id`: PUT - Route to edit an existing post
+
+
+  
 - `/posts/:id`: GET - Route to retrieve a post by its ID
 - `/posts`: GET - Route to retrieve all posts
+
+![Get Post](screenshots/getPosts.png)
+  
 - `/friends/search`: POST - Route for searching users
 - `/friends/add`: POST - Route for adding friends
 
