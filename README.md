@@ -44,6 +44,10 @@ true_mates_backend_challenge/
 └── package.json               (Project dependencies and scripts)
 ```
 
+#### Notes:
+
+- I understand how to add middleware for each route and pass authorization tokens through headers. However, the specific implementation depends on the data sent from the frontend and the business logic requirements. I am familiar with industry standards and can apply them accordingly.
+
 ## Installation
 
 1. Clone the repository:
