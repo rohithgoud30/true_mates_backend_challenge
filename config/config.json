@@ -1,23 +1,23 @@
 {
   "development": {
-    "username": "rohithgoud30",
-    "password": "Rohith@123",
-    "database": "true_mates_db_dev",
-    "host": "localhost",
+    "username": "your_dev_username",
+    "password": "your_dev_password",
+    "database": "your_dev_database_name",
+    "host": "your_dev_host",
     "dialect": "postgres"
   },
   "test": {
-    "username": "rohithgoud30",
-    "password": "Rohith@123",
-    "database": "true_mates_db_test",
-    "host": "localhost",
+    "username": "your_test_username",
+    "password": "your_test_password",
+    "database": "your_test_database_name",
+    "host": "your_test_host",
     "dialect": "postgres"
   },
   "production": {
-    "username": "rohithgoud30",
-    "password": "Rohith@123",
-    "database": "true_mates_db_prod",
-    "host": "localhost",
+    "username": "your_prod_username",
+    "password": "your_prod_password",
+    "database": "your_prod_database_name",
+    "host": "your_prod_host",
     "dialect": "postgres"
   }
 }
