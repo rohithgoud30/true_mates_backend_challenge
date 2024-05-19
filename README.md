@@ -46,7 +46,7 @@ true_mates_backend_challenge/
 
 #### Note:
 
-- I understand that some parts of the code may not be consistent, for example, I know how to add middleware for each route and pass authorization tokens through headers. I can also pass a few values in query parameters and search parameters instead of passing them through the body of the API. I totally understand that I just want to show different possible combinations. I am confident that when I am in a business setting, I will follow the standards of the project. However, the specific implementation depends on the data sent from the frontend and the business logic requirements. I am familiar with good practices and industry standards, and I can apply them accordingly.
+- I understand that some parts of the code may not be consistent, for example, I know how to add middleware for each route and pass authorization tokens as cookies or in headers. I can also pass a few values in query parameters and search parameters instead of passing them through the body of the API. I totally understand that I just want to show different possible combinations. I am confident that when I am in a business setting, I will follow the standards of the project. However, the specific implementation depends on the data sent from the frontend and the business logic requirements. I am familiar with good practices and industry standards, and I can apply them accordingly.
 
 ## Installation
 
